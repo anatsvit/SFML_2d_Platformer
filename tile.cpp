@@ -44,15 +44,15 @@ bool tile_place(int x, int y)
 {
     int tx = (int)(x / TILE_WIDTH);
     int ty = (int)(y / TILE_HEIGHT);
-	return (0 != tile_map[tx][ty]);
+    return (0 != tile_map[tx][ty]);
 }
 
 //ok
 unsigned char get_tile(int x, int y)
 {
-	int tx = (int)(x / TILE_WIDTH);
+    int tx = (int)(x / TILE_WIDTH);
     int ty = (int)(y / TILE_HEIGHT);
-	return tile_map[tx][ty];
+    return tile_map[tx][ty];
 }
 
 //ok
