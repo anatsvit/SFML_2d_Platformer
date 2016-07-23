@@ -231,20 +231,33 @@ int main()
 				}
 			}
 			
-			if(!tile_place(coords.fx, coords.fy) && tile_place(coords.ex, coords.ey))
+			if(!tile_place(coords.fx, coords.fy) && (tile_place(coords.ex, coords.ey) || tile_place(coords.ex, coords.ey + 1)))
 			{
-				if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_LEFT))
+				if (tile_place(coords.ex, coords.ey))
 				{
-					ny = get_my_y(coords.ex, coords.ey, MODE_LEFT) + 1;
-					py = modify_xy(px, py, ny);
+					if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_LEFT))
+					{
+						ny = get_my_y(coords.ex, coords.ey, MODE_LEFT) + 1;
+						py = modify_xy(px, py, ny);
+					}
+					
+					if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_RIGHT))
+					{
+						ny = get_my_y(coords.ex, coords.ey, MODE_LEFT);
+						py = modify_xy(px, py, ny, 1);
+					}
 				}
 				
-				if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_RIGHT))
+				if (tile_place(coords.ex, coords.ey + 1))
 				{
-					ny = get_my_y(coords.ex, coords.ey, MODE_LEFT);
-					py = modify_xy(px, py, ny, 1);
+					if (is_tile_type(coords.ex, coords.ey + 1, TT_SLOPE_RIGHT))
+					{
+						ny = get_my_y(coords.ex, coords.ey + 1, MODE_LEFT);
+						py = modify_xy(px, py, ny);
+					}
 				}
 			}
+		
 			
 			if(!tile_place(coords.fx, coords.fy) && tile_place(coords.ex, coords.ey + 1))
 			{
@@ -255,7 +268,6 @@ int main()
 				}
 			}
 		}
-		/////////////////////
 		
 		if(on_ground)
 		{
