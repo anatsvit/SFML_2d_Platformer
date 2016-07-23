@@ -21,6 +21,8 @@ void set_pixon(int x, int y, bool logging = false);
 bool is_tile_type(int x, int y, int type);
 int get_my_y(int x, int y, int mode = MODE_NORMAL);
 int modify_xy(int my_x, int my_y, int new_y, int shift_new_y = 0);
+int calculate_y(int px, int py);
+void keyboard_control(float *dx, float *dy);
 
 ///////////////////
 unsigned char tile_map[MAP_H][MAP_W];
@@ -75,8 +77,6 @@ int main()
 
     float gravity = 0;
     int ny = 0;
-    int future_y = 0;
-    int future_coords_fy = 0;
 
     int mouse_x = 0;
     int mouse_y = 0;
@@ -94,55 +94,7 @@ int main()
 
         window.clear();
         
-        move_left = false;
-        move_right = false;
-        if (Keyboard::isKeyPressed(Keyboard::Left))
-        {
-            dx=-1;
-            move_left = true;
-            move_right = false;
-        }
-
-        if (Keyboard::isKeyPressed(Keyboard::Right))
-        {
-            dx=1;
-            move_right = true;
-            move_left = false;
-        }
-        
-        if (Keyboard::isKeyPressed(Keyboard::Up))
-        {
-            if(!debug_mode)
-            {
-                if(on_ground){dy = -4; on_ground = false; is_jumping = true;}
-            }
-            else
-            {
-                dy = -1;
-            }
-        }
-        
-        if (Keyboard::isKeyPressed(Keyboard::Down))
-        {
-            if(debug_mode)
-            {
-                dy = 3;
-            }
-        }
-
-        mouse_x = 0;
-        mouse_y = 0;
-        if (Mouse::isButtonPressed(Mouse::Left))
-        {
-            Vector2i mp = Mouse::getPosition(window);
-            tile_map[get_tile_x_location(mp.x)][get_tile_x_location(mp.y)] = 0x22;
-        }
-        
-        if (Mouse::isButtonPressed(Mouse::Right))
-        {
-            Vector2i mp = Mouse::getPosition(window);
-            tile_map[get_tile_x_location(mp.x)][get_tile_x_location(mp.y)] = 0x23;
-        }
+        keyboard_control(&dx, &dy);
 
         px = px + dx; dx = 0;
         if(!debug_mode)
@@ -150,18 +102,17 @@ int main()
             //gravity
             if(!on_ground)
             {
-            dy = dy + 0.2;
-            if(dy > 3) dy = 3;
+                dy = dy + 0.2;
+                if(dy > 3) dy = 3;
 
-            py = py + dy; 
-
+                py = py + dy; 
             }
         }
         else
         {
             if(!on_ground)
             {
-            py = py + dy;
+                py = py + dy;
             }
         }
 
@@ -169,107 +120,8 @@ int main()
 
         update_coords(px, py, &coords);
         on_ground = false;
-
-
-        if(dy >= 0)
-        {
-            if(tile_place(coords.fx, coords.fy))
-            {
-                ny = get_my_y(coords.fx, coords.fy);
-                py = modify_xy(px, py, ny);
-            }
-
-            if(tile_place(coords.fx, coords.fy+1))
-            {
-                ny = get_my_y(coords.fx, coords.fy + 1);
-                py = modify_xy(px, py, ny - 1, 1);
-            }
-
-            ////////////////////////HYBRID
-            if(debug_mode)
-            {
-                system("cls");
-
-                cout << "GXGY: " << tile_place(coords.gx, coords.gy) << endl;
-                cout << "FXFY: " << tile_place(coords.fx, coords.fy) << endl;
-                cout << "EXEY: " << tile_place(coords.ex, coords.ey) << endl;
-                cout << "ON_GROUND: " << on_ground << endl;
-            }
-            if(!tile_place(coords.fx, coords.fy) && (tile_place(coords.gx, coords.gy) || tile_place(coords.gx, coords.gy + 1)))
-            {
-                if (tile_place(coords.gx, coords.gy))
-                {
-                    if (is_tile_type(coords.gx, coords.gy, TT_SLOPE_LEFT))
-                    {
-                        ny = get_my_y(coords.gx, coords.gy, MODE_RIGHT);
-                        py = modify_xy(px, py, ny);
-                    }
-
-                    if (is_tile_type(coords.gx, coords.gy, TT_SLOPE_RIGHT))
-                    {
-                        ny = get_my_y(coords.gx, coords.gy, MODE_RIGHT);
-                        py = modify_xy(px, py, ny, 1);
-                    }
-                }
-
-                if (tile_place(coords.gx, coords.gy + 1))
-                {
-                    if (is_tile_type(coords.gx, coords.gy + 1, TT_SLOPE_LEFT))
-                    {
-                        ny = get_my_y(coords.gx, coords.gy + 1, MODE_RIGHT);
-                        py = modify_xy(px, py, ny);
-                    }
-
-                    if (is_tile_type(coords.gx, coords.gy + 1, TT_SLOPE_RIGHT))
-                    {
-                        ny = get_my_y(coords.gx, coords.gy + 1, MODE_RIGHT);
-                        py = modify_xy(px, py, ny, 1);
-                    }
-
-                    if (is_tile_type(coords.gx, coords.gy + 1, TT_FLAT))
-                    {
-                        ny = get_my_y(coords.gx, coords.gy + 1, MODE_RIGHT);
-                        py = modify_xy(px, py, ny);
-                    }
-                }
-            }
-
-            if(!tile_place(coords.fx, coords.fy) && (tile_place(coords.ex, coords.ey) || tile_place(coords.ex, coords.ey + 1)))
-            {
-                if (tile_place(coords.ex, coords.ey))
-                {
-                    if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_LEFT))
-                    {
-                        ny = get_my_y(coords.ex, coords.ey, MODE_LEFT) + 1;
-                        py = modify_xy(px, py, ny);
-                    }
-
-                    if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_RIGHT))
-                    {
-                        ny = get_my_y(coords.ex, coords.ey, MODE_LEFT);
-                        py = modify_xy(px, py, ny, 1);
-                    }
-                }
-
-                if (tile_place(coords.ex, coords.ey + 1))
-                {
-                    if (is_tile_type(coords.ex, coords.ey + 1, TT_SLOPE_RIGHT))
-                    {
-                        ny = get_my_y(coords.ex, coords.ey + 1, MODE_LEFT);
-                        py = modify_xy(px, py, ny);
-                    }
-                }
-            }
-
-            if(!tile_place(coords.fx, coords.fy) && tile_place(coords.ex, coords.ey + 1))
-            {
-                if (is_tile_type(coords.ex, coords.ey + 1, TT_FLAT))
-                {
-                    ny = get_my_y(coords.ex, coords.ey + 1, MODE_LEFT);
-                    py = modify_xy(px, py, ny);
-                }
-            }
-        }
+        
+        if(dy >= 0) { py = calculate_y(px, py); }
 
         if(on_ground)
         {
@@ -277,18 +129,17 @@ int main()
             is_jumping = false;
         }
 
+        //В падении ли?
         is_falling = false;
         if (!on_ground && !is_jumping && dy > 0)
         {
             is_falling = true;
         }
 
-
         update_coords(px, py, &coords);
 
         set_pixon(px, py);
         player.setPosition(px, py);
-
 
         for(int i = 0; i < 100; i++)
         {
@@ -445,4 +296,140 @@ int modify_xy(int my_x, int my_y, int new_y, int shift_new_y)
     }
     update_coords(my_x, py, &coords);
     return py;
+}
+
+int calculate_y(int px, int py)
+{
+    int ny = 0;
+    int new_py = py;
+    
+    if(tile_place(coords.fx, coords.fy))
+    {
+        ny = get_my_y(coords.fx, coords.fy);
+        new_py = modify_xy(px, py, ny);
+    }
+
+    if(tile_place(coords.fx, coords.fy+1))
+    {
+        ny = get_my_y(coords.fx, coords.fy + 1);
+        new_py = modify_xy(px, py, ny - 1, 1);
+    }
+
+    ////////////////////////HYBRID
+    if(!tile_place(coords.fx, coords.fy) && (tile_place(coords.gx, coords.gy) || tile_place(coords.gx, coords.gy + 1)))
+    {
+        if (tile_place(coords.gx, coords.gy))
+        {
+            if (is_tile_type(coords.gx, coords.gy, TT_SLOPE_LEFT))
+            {
+                ny = get_my_y(coords.gx, coords.gy, MODE_RIGHT);
+                new_py = modify_xy(px, py, ny);
+            }
+
+            if (is_tile_type(coords.gx, coords.gy, TT_SLOPE_RIGHT))
+            {
+                ny = get_my_y(coords.gx, coords.gy, MODE_RIGHT);
+                new_py = modify_xy(px, py, ny, 1);
+            }
+        }
+
+        if (tile_place(coords.gx, coords.gy + 1))
+        {
+            if (is_tile_type(coords.gx, coords.gy + 1, TT_SLOPE_LEFT))
+            {
+                ny = get_my_y(coords.gx, coords.gy + 1, MODE_RIGHT);
+                new_py = modify_xy(px, py, ny);
+            }
+
+            if (is_tile_type(coords.gx, coords.gy + 1, TT_SLOPE_RIGHT))
+            {
+                ny = get_my_y(coords.gx, coords.gy + 1, MODE_RIGHT);
+                new_py = modify_xy(px, py, ny, 1);
+            }
+
+            if (is_tile_type(coords.gx, coords.gy + 1, TT_FLAT))
+            {
+                ny = get_my_y(coords.gx, coords.gy + 1, MODE_RIGHT);
+                new_py = modify_xy(px, py, ny);
+            }
+        }
+    }
+
+    if(!tile_place(coords.fx, coords.fy) && (tile_place(coords.ex, coords.ey) || tile_place(coords.ex, coords.ey + 1)))
+    {
+        if (tile_place(coords.ex, coords.ey))
+        {
+            if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_LEFT))
+            {
+                ny = get_my_y(coords.ex, coords.ey, MODE_LEFT) + 1;
+                new_py = modify_xy(px, py, ny);
+            }
+
+            if (is_tile_type(coords.ex, coords.ey, TT_SLOPE_RIGHT))
+            {
+                ny = get_my_y(coords.ex, coords.ey, MODE_LEFT);
+                new_py = modify_xy(px, py, ny, 1);
+            }
+        }
+
+        if (tile_place(coords.ex, coords.ey + 1))
+        {
+            if (is_tile_type(coords.ex, coords.ey + 1, TT_SLOPE_RIGHT))
+            {
+                ny = get_my_y(coords.ex, coords.ey + 1, MODE_LEFT);
+                new_py = modify_xy(px, py, ny);
+            }
+        }
+    }
+
+    if(!tile_place(coords.fx, coords.fy) && tile_place(coords.ex, coords.ey + 1))
+    {
+        if (is_tile_type(coords.ex, coords.ey + 1, TT_FLAT))
+        {
+            ny = get_my_y(coords.ex, coords.ey + 1, MODE_LEFT);
+            new_py = modify_xy(px, py, ny);
+        }
+    }
+    
+    return new_py;
+}
+
+void keyboard_control(float *dx, float *dy)
+{
+        move_left = false;
+        move_right = false;
+        
+        if (Keyboard::isKeyPressed(Keyboard::Left))
+        {
+            *dx=-1;
+            move_left = true;
+            move_right = false;
+        }
+
+        if (Keyboard::isKeyPressed(Keyboard::Right))
+        {
+            *dx=1;
+            move_right = true;
+            move_left = false;
+        }
+        
+        if (Keyboard::isKeyPressed(Keyboard::Up))
+        {
+            if(!debug_mode)
+            {
+                if(on_ground){*dy = -4; on_ground = false; is_jumping = true;}
+            }
+            else
+            {
+                *dy = -1;
+            }
+        }
+        
+        if (Keyboard::isKeyPressed(Keyboard::Down))
+        {
+            if(debug_mode)
+            {
+                *dy = 3;
+            }
+        } 
 }
