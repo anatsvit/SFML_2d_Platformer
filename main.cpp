@@ -9,6 +9,15 @@
 #define MODE_LEFT   1
 #define MODE_RIGHT  2
 
+///////////////////////BACKGROUND
+#define BG_WIDTH   768
+#define BG_HEIGHT  480
+#define WIN_WIDTH  320
+#define WIN_HEIGHT 240
+//Чем больше PARALLAX_FACTOR тем дальше фон
+#define PARALLAX_FACTOR 6
+///////////////////////
+
 #define GAME_SPEED  70 //70 - default
 
 using namespace sf;
@@ -80,6 +89,23 @@ int main()
 
     int mouse_x = 0;
     int mouse_y = 0;
+    
+    ////////////////////////BACKGROUND
+    Texture bg_texture;
+    Sprite bg_sprite;
+    bg_texture.setSmooth(true);
+
+    //Фон загружается как обычный спрайт:
+    bg_texture.loadFromFile("bg.jpg");
+    bg_sprite.setTexture(bg_texture);
+    
+    View view;
+    view.reset(FloatRect(0,0,WIN_WIDTH,WIN_HEIGHT));
+    view.setViewport(FloatRect(0,0,1.0f,1.0f));
+
+    Vector2f pos(0,0);
+    
+    ////////////////////////
 
     while(window.isOpen())
     {
@@ -92,9 +118,37 @@ int main()
             }
         }
 
-        window.clear();
-        
         keyboard_control(&dx, &dy);
+        
+        ///////////////////////////BACKGROUND
+         //Получить позицию игрока для камеры
+        pos.x = px + 10 - (WIN_WIDTH / 2);
+        pos.y = py + 10 - (WIN_HEIGHT / 2);
+
+        //Ограничить камеру вначале
+        if(pos.x < 0) pos.x = 0;
+        if(pos.y < 0) pos.y = 0;
+        //и в конце уровня
+        if(PARALLAX_FACTOR > 0)
+        {
+            if(pos.x > BG_WIDTH-WIN_WIDTH / PARALLAX_FACTOR) pos.x = BG_WIDTH-WIN_WIDTH / 2;
+            if(pos.y > BG_HEIGHT-WIN_HEIGHT / PARALLAX_FACTOR) pos.y = BG_HEIGHT-WIN_HEIGHT / 2;
+        }
+        else
+        {
+            if(pos.x > BG_WIDTH-WIN_WIDTH) pos.x = BG_WIDTH-WIN_WIDTH;
+            if(pos.y > BG_HEIGHT-WIN_HEIGHT) pos.y = BG_HEIGHT-WIN_HEIGHT;
+        }
+
+
+        //Это для Parallax Scrolling
+        if(PARALLAX_FACTOR > 0)
+        bg_sprite.setPosition(pos.x / PARALLAX_FACTOR, pos.y / PARALLAX_FACTOR);
+        else
+        bg_sprite.setPosition(pos.x, pos.y);
+
+        view.reset(FloatRect(pos.x,pos.y,WIN_WIDTH,WIN_HEIGHT));
+        ///////////////////////////
 
         px = px + dx; dx = 0;
         if(!debug_mode)
@@ -138,9 +192,13 @@ int main()
 
         update_coords(px, py, &coords);
 
-        set_pixon(px, py);
+        //set_pixon(px, py);
         player.setPosition(px, py);
-
+        
+        
+        window.clear();
+        window.setView(view);
+        window.draw(bg_sprite); //Отобразить фон
         for(int i = 0; i < 100; i++)
         {
             for(int j = 0; j < 100; j++)
