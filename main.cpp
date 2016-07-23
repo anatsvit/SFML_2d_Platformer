@@ -172,6 +172,43 @@ void load_map()
 {
     init_map();
     int x_shift = 4;
+    
+    FILE *f = fopen("level.hex","r");
+    unsigned char tile[6];
+    int x = 0;
+    int y = 0;
+    int t = 0;
+    
+    int i = 0;
+    if(f != NULL)
+    {
+        while(!feof(f))
+        {
+            fread(&tile,6,1,f);
+            x = tile[0];
+            x = x << 8;
+            x = x | tile[1];
+            
+            y = tile[2];
+            y = y << 8;
+            y = y | tile[3];
+            
+            t = tile[4];
+            t = t << 8;
+            t = t | tile[5];
+            
+            tile_map[x][y] = t;
+     
+            i++;
+        }
+        fclose(f);
+    }
+    else
+    {
+        cout << "Error: open file";
+    }
+    
+    
     /*
     //Test #1
     //Левый склон
@@ -193,7 +230,7 @@ void load_map()
     }
     */
     
-
+    
     //Test #2
     //Левый склон
     for (int i = 0; i < 10; i++)
@@ -212,7 +249,8 @@ void load_map()
     {
         tile_map[20+i+x_shift][19-i] = 0x15;
     }
-
+    
+    
 }
 
 //ok
@@ -298,6 +336,7 @@ int modify_xy(int my_x, int my_y, int new_y, int shift_new_y)
     return py;
 }
 
+//Вычисление на склонах и ровных поверхностях
 int calculate_y(int px, int py)
 {
     int ny = 0;
@@ -315,7 +354,7 @@ int calculate_y(int px, int py)
         new_py = modify_xy(px, py, ny - 1, 1);
     }
 
-    ////////////////////////HYBRID
+    
     if(!tile_place(coords.fx, coords.fy) && (tile_place(coords.gx, coords.gy) || tile_place(coords.gx, coords.gy + 1)))
     {
         if (tile_place(coords.gx, coords.gy))
