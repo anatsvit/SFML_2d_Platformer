@@ -182,7 +182,7 @@ int main()
 				py = modify_xy(px, py, ny - 1, 1);
 			}
 			
-			/////////////////////HYBRID
+			//////////////////////HYBRID
 			if(debug_mode)
 			{
 				system("cls");
