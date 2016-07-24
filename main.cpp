@@ -131,8 +131,8 @@ int main()
         //и в конце уровня
         if(PARALLAX_FACTOR > 0)
         {
-            if(pos.x > BG_WIDTH-WIN_WIDTH / BG_WIDTH) pos.x = BG_WIDTH-WIN_WIDTH / BG_WIDTH;
-            if(((pos.y / PARALLAX_FACTOR) + WIN_HEIGHT) >= BG_HEIGHT) pos.y = BG_HEIGHT - (WIN_HEIGHT*2);
+            if(pos.x >= WIN_HEIGHT) pos.x = WIN_HEIGHT;
+            if(pos.y >= WIN_WIDTH) pos.y = WIN_WIDTH;
         }
         else
         {
@@ -146,8 +146,8 @@ int main()
         if(PARALLAX_FACTOR > 0)
         {
             system("cls");
-            cout << "POSX = " << pos.x / PARALLAX_FACTOR << endl;
-            cout << "POSY = " << pos.y / PARALLAX_FACTOR << endl;
+            cout << "POSX = " << pos.x << endl;
+            cout << "POSY = " << pos.y << endl;
             bg_sprite.setPosition(pos.x / PARALLAX_FACTOR, pos.y / PARALLAX_FACTOR);
         }
         else
