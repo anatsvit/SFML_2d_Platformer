@@ -15,7 +15,7 @@
 #define WIN_WIDTH  320
 #define WIN_HEIGHT 240
 //Чем больше PARALLAX_FACTOR тем дальше фон
-#define PARALLAX_FACTOR 6
+#define PARALLAX_FACTOR 4
 ///////////////////////
 
 #define GAME_SPEED  70 //70 - default
@@ -43,7 +43,7 @@ bool move_left = false;
 bool move_right = false;
 float timega;
 
-bool debug_mode = false;
+bool debug_mode = true;
 ///////////////////
 
 Coords coords;
@@ -131,21 +131,30 @@ int main()
         //и в конце уровня
         if(PARALLAX_FACTOR > 0)
         {
-            if(pos.x > BG_WIDTH-WIN_WIDTH / PARALLAX_FACTOR) pos.x = BG_WIDTH-WIN_WIDTH / 2;
-            if(pos.y > BG_HEIGHT-WIN_HEIGHT / PARALLAX_FACTOR) pos.y = BG_HEIGHT-WIN_HEIGHT / 2;
+            if(pos.x > BG_WIDTH-WIN_WIDTH / BG_WIDTH) pos.x = BG_WIDTH-WIN_WIDTH / BG_WIDTH;
+            if(((pos.y / PARALLAX_FACTOR) + WIN_HEIGHT) >= BG_HEIGHT) pos.y = BG_HEIGHT - (WIN_HEIGHT*2);
         }
         else
         {
-            if(pos.x > BG_WIDTH-WIN_WIDTH) pos.x = BG_WIDTH-WIN_WIDTH;
+            if(pos.x > BG_WIDTH-WIN_WIDTH)   pos.x = BG_WIDTH-WIN_WIDTH;
             if(pos.y > BG_HEIGHT-WIN_HEIGHT) pos.y = BG_HEIGHT-WIN_HEIGHT;
+            
         }
 
 
         //Это для Parallax Scrolling
         if(PARALLAX_FACTOR > 0)
-        bg_sprite.setPosition(pos.x / PARALLAX_FACTOR, pos.y / PARALLAX_FACTOR);
+        {
+            system("cls");
+            cout << "POSX = " << pos.x / PARALLAX_FACTOR << endl;
+            cout << "POSY = " << pos.y / PARALLAX_FACTOR << endl;
+            bg_sprite.setPosition(pos.x / PARALLAX_FACTOR, pos.y / PARALLAX_FACTOR);
+        }
         else
-        bg_sprite.setPosition(pos.x, pos.y);
+        {
+            bg_sprite.setPosition(pos.x, pos.y);
+        }
+        
 
         view.reset(FloatRect(pos.x,pos.y,WIN_WIDTH,WIN_HEIGHT));
         ///////////////////////////
@@ -170,7 +179,7 @@ int main()
             }
         }
 
-        if(py > 350) py = 0;
+        if(py > 650) py = 650;
 
         update_coords(px, py, &coords);
         on_ground = false;
