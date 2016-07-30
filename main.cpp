@@ -10,12 +10,12 @@
 #define MODE_RIGHT  2
 
 ///////////////////////BACKGROUND
-#define BG_WIDTH   768
-#define BG_HEIGHT  480
+#define BG_WIDTH   640
+#define BG_HEIGHT  500
 #define WIN_WIDTH  320
 #define WIN_HEIGHT 240
 //Чем больше PARALLAX_FACTOR тем дальше фон
-#define PARALLAX_FACTOR 4
+#define PARALLAX_FACTOR 2
 ///////////////////////
 
 #define GAME_SPEED  70 //70 - default
@@ -32,6 +32,7 @@ int get_my_y(int x, int y, int mode = MODE_NORMAL);
 int modify_xy(int my_x, int my_y, int new_y, int shift_new_y = 0);
 int calculate_y(int px, int py);
 void keyboard_control(float *dx, float *dy);
+int find_max_cam(int xy = 0); //x - 0, y - 1
 
 ///////////////////
 unsigned char tile_map[MAP_H][MAP_W];
@@ -43,7 +44,7 @@ bool move_left = false;
 bool move_right = false;
 float timega;
 
-bool debug_mode = true;
+bool debug_mode = false;
 ///////////////////
 
 Coords coords;
@@ -106,7 +107,8 @@ int main()
     Vector2f pos(0,0);
     
     ////////////////////////
-
+    int max_x = find_max_cam(0);
+    int max_y = find_max_cam(1);
     while(window.isOpen())
     {
         Event event;
@@ -121,18 +123,19 @@ int main()
         keyboard_control(&dx, &dy);
         
         ///////////////////////////BACKGROUND
-         //Получить позицию игрока для камеры
-        pos.x = px + 10 - (WIN_WIDTH / 2);
-        pos.y = py + 10 - (WIN_HEIGHT / 2);
+        //Получить позицию игрока для камеры
+        pos.x = px - (WIN_WIDTH / 2);
+        pos.y = py - (WIN_HEIGHT / 2);
 
         //Ограничить камеру вначале
         if(pos.x < 0) pos.x = 0;
         if(pos.y < 0) pos.y = 0;
+        
         //и в конце уровня
         if(PARALLAX_FACTOR > 0)
         {
-            if(pos.x >= WIN_HEIGHT) pos.x = WIN_HEIGHT;
-            if(pos.y >= WIN_WIDTH) pos.y = WIN_WIDTH;
+             if (pos.x >= max_x) pos.x = max_x;
+             if (pos.y >= max_y) pos.y = max_y;
         }
         else
         {
@@ -141,13 +144,9 @@ int main()
             
         }
 
-
         //Это для Parallax Scrolling
         if(PARALLAX_FACTOR > 0)
         {
-            system("cls");
-            cout << "POSX = " << pos.x << endl;
-            cout << "POSY = " << pos.y << endl;
             bg_sprite.setPosition(pos.x / PARALLAX_FACTOR, pos.y / PARALLAX_FACTOR);
         }
         else
@@ -156,7 +155,7 @@ int main()
         }
         
 
-        view.reset(FloatRect(pos.x,pos.y,WIN_WIDTH,WIN_HEIGHT));
+        view.reset(FloatRect(pos.x, pos.y, WIN_WIDTH, WIN_HEIGHT));
         ///////////////////////////
 
         px = px + dx; dx = 0;
@@ -176,10 +175,11 @@ int main()
             if(!on_ground)
             {
                 py = py + dy;
+                dy = 0;
             }
         }
 
-        if(py > 650) py = 650;
+        if(py > 750) py = 750;
 
         update_coords(px, py, &coords);
         on_ground = false;
@@ -538,4 +538,37 @@ void keyboard_control(float *dx, float *dy)
                 *dy = 3;
             }
         } 
+}
+
+int find_max_cam(int xy)
+{
+    int r = 0;
+    if (xy > 0)
+    {
+        //y
+        for(int i = 0; i < (BG_HEIGHT + WIN_HEIGHT) * PARALLAX_FACTOR; i++)
+        {
+            if ((BG_HEIGHT - WIN_HEIGHT) == i - (i / PARALLAX_FACTOR))
+            { 
+                r = i;
+                break;
+            }
+        } 
+    }
+    else
+    {
+       //x
+       for(int i = 0; i < (BG_WIDTH + WIN_WIDTH) * PARALLAX_FACTOR; i++)
+        {
+            if ((BG_WIDTH - WIN_WIDTH) == i - (i / PARALLAX_FACTOR))
+            { 
+                r = i;
+                break;
+            }
+        } 
+    }
+    
+    
+    
+    return r;
 }
