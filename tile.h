@@ -11,7 +11,7 @@
 #define TT_SLOPE_RIGHT 4 //0000000000000100
 #define TT_FLAT        8 //0000000000001000
 
-extern unsigned char tile_map[MAP_H][MAP_W];
+extern unsigned char tile_map[MAP_W][MAP_H];
 
 typedef struct Coords
 {

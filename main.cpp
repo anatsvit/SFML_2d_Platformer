@@ -34,7 +34,7 @@ int calculate_y(int px, int py);
 void keyboard_control(float *dx, float *dy);
 
 ///////////////////
-unsigned char tile_map[MAP_H][MAP_W];
+unsigned char tile_map[MAP_W][MAP_H];
 ///////////////////
 bool on_ground = false;
 bool is_jumping = false;
@@ -98,6 +98,9 @@ int main()
     //Фон загружается как обычный спрайт:
     bg_texture.loadFromFile("bg.jpg");
     bg_sprite.setTexture(bg_texture);
+    //Координаты фона
+    float bgx;
+    float bgy;
     
     View view;
     view.reset(FloatRect(0,0,WIN_WIDTH,WIN_HEIGHT));
@@ -109,7 +112,12 @@ int main()
     ////////////////////////
     int max_cam_x = 10000;
     int max_cam_y = 10000;
-
+    
+    int start_draw_x;
+    int start_draw_y;
+    int end_draw_x;
+    int end_draw_y;
+    
     while(window.isOpen())
     {
         Event event;
@@ -149,11 +157,20 @@ int main()
             camera.y = camera.y > 0 ? camera.y : 0;
             
             //и в конце
-            if (camera.x > max_cam_x) camera.x = max_cam_x;
+            if (camera.x > max_cam_x)
+            {
+                bgx = camera.x - (BG_WIDTH - WIN_WIDTH);
+            }
+            else
+            {
+                bgx = camera.x / PARALLAX_FACTOR;
+            }
+            
+            
             if (camera.y > max_cam_y) camera.y = max_cam_y;
             
             //установим позицию фона
-            bg_sprite.setPosition(camera.x / PARALLAX_FACTOR, camera.y / PARALLAX_FACTOR);
+            bg_sprite.setPosition(bgx, camera.y / PARALLAX_FACTOR);
         }
         else
         {
@@ -161,28 +178,8 @@ int main()
             if(camera.y > BG_HEIGHT - WIN_HEIGHT) camera.y = BG_HEIGHT - WIN_HEIGHT; 
             bg_sprite.setPosition(camera.x, camera.y);
         }
-
-        if (camera.x > previous_camera.x)
-        {
-            previous_camera.x += 0.001;
-        }
         
-        if (camera.x < previous_camera.x)
-        {
-            previous_camera.x -= 0.001;
-        }
-        
-        if (camera.y > previous_camera.y)
-        {
-            previous_camera.y += 0.001;
-        }
-        
-        if (camera.y > previous_camera.y)
-        {
-            previous_camera.y -= 0.001;
-        }
-        
-        view.reset(FloatRect(previous_camera.x, previous_camera.y, WIN_WIDTH, WIN_HEIGHT));
+        view.reset(FloatRect(camera.x, camera.y, WIN_WIDTH, WIN_HEIGHT));
         ///////////////////////////
 
         px = px + dx; dx = 0;
@@ -234,7 +231,17 @@ int main()
         window.setView(view);
         window.draw(bg_sprite); //Отобразить фон
         
-        for(int i = 0; i < 100; i++)
+        
+        start_draw_x = (int)(camera.x / 8);
+        end_draw_x = (int)((camera.x + WIN_WIDTH) / 8) + 10;
+        
+        start_draw_y = (int)(camera.y / 8);
+        end_draw_y = (int)((camera.y + WIN_HEIGHT) / 8) + 10;
+        
+        if (end_draw_x > MAP_W) end_draw_x = MAP_W;
+        if (end_draw_y > MAP_H) end_draw_y = MAP_H;
+        
+        for(int i = start_draw_x; i < end_draw_x; i++)
         {
             for(int j = 0; j < 100; j++)
             {
