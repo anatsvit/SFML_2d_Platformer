@@ -14,8 +14,8 @@
 #define BG_HEIGHT  500
 #define WIN_WIDTH  320
 #define WIN_HEIGHT 240
-//Чем больше PARALLAX_FACTOR тем дальше фон
-#define PARALLAX_FACTOR 2
+//Чем меньше PARALLAX_FACTOR тем дальше фон
+#define PARALLAX_FACTOR 6
 ///////////////////////
 
 #define GAME_SPEED  70 //70 - default
@@ -32,7 +32,6 @@ int get_my_y(int x, int y, int mode = MODE_NORMAL);
 int modify_xy(int my_x, int my_y, int new_y, int shift_new_y = 0);
 int calculate_y(int px, int py);
 void keyboard_control(float *dx, float *dy);
-int find_max_cam(int xy = 0); //x - 0, y - 1
 
 ///////////////////
 unsigned char tile_map[MAP_H][MAP_W];
@@ -104,11 +103,13 @@ int main()
     view.reset(FloatRect(0,0,WIN_WIDTH,WIN_HEIGHT));
     view.setViewport(FloatRect(0,0,1.0f,1.0f));
 
-    Vector2f pos(0,0);
+    Vector2f camera(0,0);
+    Vector2f previous_camera(0,0);
     
     ////////////////////////
-    int max_x = find_max_cam(0);
-    int max_y = find_max_cam(1);
+    int max_cam_x = 10000;
+    int max_cam_y = 10000;
+
     while(window.isOpen())
     {
         Event event;
@@ -123,39 +124,65 @@ int main()
         keyboard_control(&dx, &dy);
         
         ///////////////////////////BACKGROUND
-        //Получить позицию игрока для камеры
-        pos.x = px - (WIN_WIDTH / 2);
-        pos.y = py - (WIN_HEIGHT / 2);
-
-        //Ограничить камеру вначале
-        if(pos.x < 0) pos.x = 0;
-        if(pos.y < 0) pos.y = 0;
-        
-        //и в конце уровня
+        previous_camera = camera;
         if(PARALLAX_FACTOR > 0)
         {
-             if (pos.x >= max_x) pos.x = max_x;
-             if (pos.y >= max_y) pos.y = max_y;
-        }
-        else
-        {
-            if(pos.x > BG_WIDTH-WIN_WIDTH)   pos.x = BG_WIDTH-WIN_WIDTH;
-            if(pos.y > BG_HEIGHT-WIN_HEIGHT) pos.y = BG_HEIGHT-WIN_HEIGHT;
+            //Получим позицию камеры
+            camera.x = px - (WIN_WIDTH / 2);
+            camera.y = py - (WIN_HEIGHT / 2);
             
-        }
-
-        //Это для Parallax Scrolling
-        if(PARALLAX_FACTOR > 0)
-        {
-            bg_sprite.setPosition(pos.x / PARALLAX_FACTOR, pos.y / PARALLAX_FACTOR);
+            //Когда дойдем до конца
+            if ((BG_WIDTH - WIN_WIDTH) < camera.x - (camera.x / PARALLAX_FACTOR) && max_cam_x == 10000)
+            {
+                //запомним однажды предельную позицию камеры
+                max_cam_x = camera.x - 1;
+            }
+            
+            if ((BG_HEIGHT - WIN_HEIGHT) < camera.y - (camera.y / PARALLAX_FACTOR) && max_cam_y == 10000)
+            {
+                max_cam_y = camera.y - 1;
+            }
+            
+            //Ограничим камеру
+            //вначале
+            camera.x = camera.x > 0 ? camera.x : 0;
+            camera.y = camera.y > 0 ? camera.y : 0;
+            
+            //и в конце
+            if (camera.x > max_cam_x) camera.x = max_cam_x;
+            if (camera.y > max_cam_y) camera.y = max_cam_y;
+            
+            //установим позицию фона
+            bg_sprite.setPosition(camera.x / PARALLAX_FACTOR, camera.y / PARALLAX_FACTOR);
         }
         else
         {
-            bg_sprite.setPosition(pos.x, pos.y);
+            if(camera.x > BG_WIDTH - WIN_WIDTH) camera.x = BG_WIDTH - WIN_WIDTH;
+            if(camera.y > BG_HEIGHT - WIN_HEIGHT) camera.y = BG_HEIGHT - WIN_HEIGHT; 
+            bg_sprite.setPosition(camera.x, camera.y);
+        }
+
+        if (camera.x > previous_camera.x)
+        {
+            previous_camera.x += 0.001;
         }
         
-
-        view.reset(FloatRect(pos.x, pos.y, WIN_WIDTH, WIN_HEIGHT));
+        if (camera.x < previous_camera.x)
+        {
+            previous_camera.x -= 0.001;
+        }
+        
+        if (camera.y > previous_camera.y)
+        {
+            previous_camera.y += 0.001;
+        }
+        
+        if (camera.y > previous_camera.y)
+        {
+            previous_camera.y -= 0.001;
+        }
+        
+        view.reset(FloatRect(previous_camera.x, previous_camera.y, WIN_WIDTH, WIN_HEIGHT));
         ///////////////////////////
 
         px = px + dx; dx = 0;
@@ -178,8 +205,6 @@ int main()
                 dy = 0;
             }
         }
-
-        if(py > 750) py = 750;
 
         update_coords(px, py, &coords);
         on_ground = false;
@@ -204,10 +229,11 @@ int main()
         //set_pixon(px, py);
         player.setPosition(px, py);
         
-        
         window.clear();
+        
         window.setView(view);
         window.draw(bg_sprite); //Отобразить фон
+        
         for(int i = 0; i < 100; i++)
         {
             for(int j = 0; j < 100; j++)
@@ -239,6 +265,8 @@ void load_map()
 {
     init_map();
     int x_shift = 4;
+    int y_shift = 10;
+    int width = 100;
     
     FILE *f = fopen("level.hex","r");
     unsigned char tile[6];
@@ -302,19 +330,19 @@ void load_map()
     //Левый склон
     for (int i = 0; i < 10; i++)
     {
-        tile_map[i+x_shift][10+i] = 0x23;
+        tile_map[i+x_shift][10+i+y_shift] = 0x23;
     }
     
     //Прямая
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 10 + width; i++)
     {
-        tile_map[10+i+x_shift][20] = 0x22;
+        tile_map[10+i+x_shift][20+y_shift] = 0x22;
     }
     
     //Правый склон
     for (int i = 0; i < 10; i++)
     {
-        tile_map[20+i+x_shift][19-i] = 0x15;
+        tile_map[20+i+x_shift+width][19-i+y_shift] = 0x15;
     }
     
     
@@ -538,37 +566,4 @@ void keyboard_control(float *dx, float *dy)
                 *dy = 3;
             }
         } 
-}
-
-int find_max_cam(int xy)
-{
-    int r = 0;
-    if (xy > 0)
-    {
-        //y
-        for(int i = 0; i < (BG_HEIGHT + WIN_HEIGHT) * PARALLAX_FACTOR; i++)
-        {
-            if ((BG_HEIGHT - WIN_HEIGHT) == i - (i / PARALLAX_FACTOR))
-            { 
-                r = i;
-                break;
-            }
-        } 
-    }
-    else
-    {
-       //x
-       for(int i = 0; i < (BG_WIDTH + WIN_WIDTH) * PARALLAX_FACTOR; i++)
-        {
-            if ((BG_WIDTH - WIN_WIDTH) == i - (i / PARALLAX_FACTOR))
-            { 
-                r = i;
-                break;
-            }
-        } 
-    }
-    
-    
-    
-    return r;
 }
