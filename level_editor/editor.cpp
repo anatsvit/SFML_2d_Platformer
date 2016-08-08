@@ -13,8 +13,9 @@ int last_y;
 
 int tile_x_location;
 int tile_y_location;
+bool is_end;
 
-int find_y_pixel(int x, Image img);
+int find_y_pixel(int x, Image img, int px_color = 0);
 void build_tile(int xstart, Image img);
 
 
@@ -30,29 +31,27 @@ int main(int argc, char *argv[])
     t.loadFromFile("1.bmp");
     Sprite spr;
     spr.setTexture(t);
-    
+
     last_level = 0;
     last_y = 0;
 	
 	
-	int tile_x_location = 0;
-	int tile_y_location = 120;
+	tile_x_location = 0;
+	tile_y_location = 120;
 	int counter = 0;
 	//xstart + 8 при каждом новом тайле
-	while(x < IMAGE_WIDTH)
+	while(tile_x_location < IMAGE_WIDTH && !is_end)
 	{
 		cout << "tile_" << counter << "[8] = ";
 		build_tile(tile_x_location, img);
 		tile_x_location += 8;
 		counter++;
-		
 	}
        
   
     while(window.isOpen())
     {
         Event event;
-        
         
         while(window.pollEvent(event))
         {
@@ -69,19 +68,33 @@ int main(int argc, char *argv[])
 
 
 //Ищет Y пикселя
-int find_y_pixel(int x, Image img)
+int find_y_pixel(int x, Image img, int px_color)
 {
 	Color control_pixel = img.getPixel(0, 0);
+    
 	Color pixel;
+    //Color set;
 	int y = 0;
 	
 	for(int i = 0; i < IMAGE_HEIGHT; i++)
 	{
 		pixel = img.getPixel(x, i);
+        
+        if (px_color > 0)
+        {
+            switch(px_color)
+            {
+                case 1: img.setPixel(x, y, Color::Red); break;
+                case 2: img.setPixel(x, y, Color::Green); break;
+                case 3: img.setPixel(x, y, Color::Blue); break;
+                default: img.setPixel(x, y, Color::Black); break;
+            }
+        }
+        
 		if (pixel != control_pixel)
 		{
 			y = i;
-            cout << "Y=" << y << endl;
+            
 			break;
 		}
 	}
@@ -104,13 +117,14 @@ void build_tile(int xstart, Image img)
 		//наклон вправо
 		if (end_y > first_y)
 		{
-			first_level = 0
+			first_level = 0;
 		}
 		
 		//наклон влево
 		if (end_y < first_y)
 		{
 			first_level = 7;
+            
 		}
 		
 	}
@@ -133,23 +147,31 @@ void build_tile(int xstart, Image img)
 		tile_y_location--;
     }
     
-    cout << "{" << ;
+    cout << "{";
     cout << first_level << ",";
     for(int i = xstart + 1; i < xstart + 8; i++)
     {
         y = find_y_pixel(i, img);
-		
-		//при наклоне вправо
-		if (end_y > first_y)
-		{
-			level = first_level + (first_y - y);
-		}
-		
-		//при наклоне влево
-		if (end_y < first_y)
-		{
-			level = first_level - (first_y - y);
-		}
+		if (y > 0)
+        {
+            //при наклоне вправо
+            if (end_y > first_y)
+            {
+                level = first_level + (y - first_y);
+            }
+            
+            //при наклоне влево
+            if (end_y < first_y)
+            {
+                level = first_level - (first_y - y);
+            }
+        }
+        else
+        {
+            is_end = true;
+            break;
+        }
+        
 		 
         last_y = y;
         last_level = level;
@@ -161,6 +183,7 @@ void build_tile(int xstart, Image img)
 		else
 		{
 			cout << level << "};";
+			cout << last_level << "-";
 			cout << " //" << "X = " << tile_x_location;
 			cout << ", " << "Y = " << tile_y_location << endl;
 		}
