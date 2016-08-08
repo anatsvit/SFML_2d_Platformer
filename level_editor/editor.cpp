@@ -11,6 +11,9 @@ using namespace std;
 int last_level;
 int last_y;
 
+int tile_x_location;
+int tile_y_location;
+
 int find_y_pixel(int x, Image img);
 void build_tile(int xstart, Image img);
 
@@ -30,7 +33,21 @@ int main(int argc, char *argv[])
     
     last_level = 0;
     last_y = 0;
-    build_tile(0, img);   
+	
+	
+	int tile_x_location = 0;
+	int tile_y_location = 120;
+	int counter = 0;
+	//xstart + 8 при каждом новом тайле
+	while(x < IMAGE_WIDTH)
+	{
+		cout << "tile_" << counter << "[8] = ";
+		build_tile(tile_x_location, img);
+		tile_x_location += 8;
+		counter++;
+		
+	}
+       
   
     while(window.isOpen())
     {
@@ -80,8 +97,25 @@ void build_tile(int xstart, Image img)
 {
     int first_y = find_y_pixel(xstart, img);
     int end_y = find_y_pixel(xstart + 7, img);
+	
+	int first_level = last_level + (first_y - last_y);
+	if (xstart == 0)
+	{
+		//наклон вправо
+		if (end_y > first_y)
+		{
+			first_level = 0
+		}
+		
+		//наклон влево
+		if (end_y < first_y)
+		{
+			first_level = 7;
+		}
+		
+	}
     
-    int first_level = last_level + (first_y - last_y);
+    
     int y = 0;
     int level = 0;
     
@@ -89,23 +123,48 @@ void build_tile(int xstart, Image img)
     if (first_level > 7) 
     {
         first_level = 0;
+		tile_y_location++;
     }
     
     //Тайл выше предыдущего
     if (first_level < 0)
     {
         first_level = 7;
+		tile_y_location--;
     }
     
-    
+    cout << "{" << ;
     cout << first_level << ",";
-    for(int i = xstart + 1; i < xstart + 7; i++)
+    for(int i = xstart + 1; i < xstart + 8; i++)
     {
         y = find_y_pixel(i, img);
-        level = first_level + (first_y - y);
+		
+		//при наклоне вправо
+		if (end_y > first_y)
+		{
+			level = first_level + (first_y - y);
+		}
+		
+		//при наклоне влево
+		if (end_y < first_y)
+		{
+			level = first_level - (first_y - y);
+		}
+		 
         last_y = y;
         last_level = level;
-        cout << level << ",";
+		
+		if (i < xstart + 7)
+		{
+			cout << level << ",";
+		}
+		else
+		{
+			cout << level << "};";
+			cout << " //" << "X = " << tile_x_location;
+			cout << ", " << "Y = " << tile_y_location << endl;
+		}
+        
     }
     
 }
